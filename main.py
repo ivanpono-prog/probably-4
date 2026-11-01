@@ -180,7 +180,7 @@ class ProbablyFour(ctk.CTk):
 
         ctk.CTkLabel(
             self.converter_frame,
-            text="Choose your input unit",
+            text="Which unit would you prefer?",
             font=("Arial", 16),
             text_color=COLORS["text"],
         ).pack(pady=(10, 8))
@@ -189,8 +189,9 @@ class ProbablyFour(ctk.CTk):
             self.converter_frame,
             values=["Celsius", "Fahrenheit"],
             command=self.select_temperature,
-            selected_color=COLORS["accent"],
-            selected_hover_color="#D9B8C0",
+            font=("Arial", 16, "bold"),
+            selected_color="#B9A7DC",
+            selected_hover_color="#A38FCB",
             unselected_color=COLORS["numbers"],
             unselected_hover_color="#C9C4D5",
             text_color=COLORS["text"],
@@ -448,29 +449,27 @@ class ProbablyFour(ctk.CTk):
 
     def select_temperature(self, selected):
         if self.gentleman_mode:
-            # For once, the user's preference is respected.
             self.temperature_unit = selected
-
             self.comment.configure(
                 text="Very well. Your preference shall be respected."
             )
 
         elif selected == "Celsius":
             self.temperature_unit = "Fahrenheit"
-            self.temperature_choice.set("Fahrenheit")
-
-            self.comment.configure(text="Celsius? How provincial.")
+            self.comment.configure(
+                text="Celsius? How provincial."
+            )
 
         else:
             self.temperature_unit = "Celsius"
-            self.temperature_choice.set("Celsius")
-
-            self.comment.configure(text="Fahrenheit? An eccentric preference.")
+            self.comment.configure(
+                text="Fahrenheit? An eccentric preference."
+            )
 
         if self.temperature_unit == "Celsius":
-            direction = "Celsius → Fahrenheit"
+            direction = "Actually converting: Celsius → Fahrenheit"
         else:
-            direction = "Fahrenheit → Celsius"
+            direction = "Actually converting: Fahrenheit → Celsius"
 
         self.conversion_direction.configure(text=direction)
         self.converter_result.configure(text="—")
