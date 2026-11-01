@@ -1,19 +1,16 @@
 [project]
 name = "probably-4"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "A deliberately frustrating calculator with impeccable manners."
 readme = "README.md"
 authors = [
-    { name = "ivan_p", email = "ivanponono@gmail.com" }
+    { name = "ivan_p" }
 ]
 requires-python = ">=3.13"
 dependencies = [
     "customtkinter>=6.0.0",
     "pillow>=13.0.0",
 ]
-
-[project.scripts]
-probably-4 = "probably_4:main"
 
 [build-system]
 requires = ["uv_build>=0.12.12,<0.13.0"]
@@ -22,6 +19,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.2.0",
+    "ruff>=0.17.3",
 ]
 
 [tool.pytest.ini_options]
