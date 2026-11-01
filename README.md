@@ -48,7 +48,7 @@ Download the Windows version from the [Releases](../../releases) page.
 Install [uv](https://docs.astral.sh/uv/), then run:
 
 ```bash
-git clone https://github.com/ivanponono-prog/probably-4.git
+git clone https://github.com/ivanpono-prog/probably-4.git
 cd probably-4
 uv sync
 uv run python main.py
