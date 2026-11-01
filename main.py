@@ -456,15 +456,11 @@ class ProbablyFour(ctk.CTk):
 
         elif selected == "Celsius":
             self.temperature_unit = "Fahrenheit"
-            self.comment.configure(
-                text="Celsius? How provincial."
-            )
+            self.comment.configure(text="Celsius? How provincial.")
 
         else:
             self.temperature_unit = "Celsius"
-            self.comment.configure(
-                text="Fahrenheit? An eccentric preference."
-            )
+            self.comment.configure(text="Fahrenheit? An eccentric preference.")
 
         if self.temperature_unit == "Celsius":
             direction = "Actually converting: Celsius → Fahrenheit"
