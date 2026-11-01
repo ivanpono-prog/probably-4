@@ -1,8 +1,8 @@
 from personality import (
     hostility_level,
+    should_become_gentleman,
     should_confirm,
     should_delay,
-    should_become_gentleman,
 )
 
 

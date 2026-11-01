@@ -4,8 +4,8 @@ import pytest
 
 from calculator import (
     calculate_numbers,
-    format_number,
     convert_temperature,
+    format_number,
 )
 
 
@@ -33,9 +33,9 @@ def test_arithmetic(first, operator, second, expected):
 def test_division_by_zero():
     with pytest.raises(ZeroDivisionError):
         calculate_numbers(
-            Decimal("10"),
+            Decimal(10),
             "÷",
-            Decimal("0"),
+            Decimal(0),
         )
 
 
@@ -47,7 +47,7 @@ def test_number_formatting():
 
 def test_celsius_to_fahrenheit():
     result, unit = convert_temperature(
-        Decimal("100"),
+        Decimal(100),
         "Celsius",
     )
 
@@ -57,7 +57,7 @@ def test_celsius_to_fahrenheit():
 
 def test_fahrenheit_to_celsius():
     result, unit = convert_temperature(
-        Decimal("32"),
+        Decimal(32),
         "Fahrenheit",
     )
 

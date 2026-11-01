@@ -1,22 +1,24 @@
-import customtkinter as ctk
 import random
-from decimal import Decimal, InvalidOperation, DivisionByZero
-from PIL import Image
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
+
+import customtkinter as ctk
+from PIL import Image
+
 from calculator import (
     calculate_numbers,
     format_number,
+)
+from calculator import (
     convert_temperature as convert_value,
 )
 from personality import (
-    hostility_level,
+    processing_message,
     random_comment,
+    should_become_gentleman,
     should_confirm,
     should_delay,
-    processing_message,
-    should_become_gentleman,
 )
-
 
 ctk.set_appearance_mode("light")
 ctk.set_widget_scaling(1.0)
@@ -51,6 +53,7 @@ class ProbablyFour(ctk.CTk):
         self.calculation_count = 0
         self.processing = False
         self.gentleman_mode = False
+        self.keyboard_used = False
 
         self.create_interface()
         self.bind("<KeyPress>", self.on_key_press)
@@ -254,7 +257,6 @@ class ProbablyFour(ctk.CTk):
 
         button_frame = self.button_frame
 
-
         buttons = [
             ["7", "8", "9", "÷"],
             ["4", "5", "6", "×"],
@@ -264,6 +266,7 @@ class ProbablyFour(ctk.CTk):
         ]
 
         self.digit_buttons = []
+        self.operator_buttons = {}
 
         for row_index, row in enumerate(buttons):
             for col_index, value in enumerate(row):
@@ -289,6 +292,9 @@ class ProbablyFour(ctk.CTk):
                     command=lambda v=value: self.handle_button(v),
                 )
 
+                if value in ["+", "−", "×", "÷"]:
+                    self.operator_buttons[value] = button
+
                 if value.isdigit():
                     self.digit_buttons.append(button)
 
@@ -310,14 +316,29 @@ class ProbablyFour(ctk.CTk):
                     )
 
     def update_display(self):
+        if self.first_number is not None and self.operator is not None:
+            first = format_number(self.first_number)
+
+            if self.start_new_input:
+                text = f"{first} {self.operator}"
+            else:
+                text = f"{first} {self.operator} {self.current_input}"
+        else:
+            text = self.current_input
+
         self.display.configure(state="normal")
         self.display.delete(0, "end")
-        self.display.insert(0, self.current_input)
+        self.display.insert(0, text)
         self.display.configure(state="readonly")
 
-    def handle_button(self, value):
+        self.update_operator_highlight()
+
+    def handle_button(self, value, source="mouse"):
         if self.processing:
             return
+
+        if source == "keyboard" and value != "C":
+            self.keyboard_used = True
 
         if value == "C":
             self.clear()
@@ -384,9 +405,7 @@ class ProbablyFour(ctk.CTk):
 
         except (InvalidOperation, ZeroDivisionError, ValueError):
             self.current_input = "Error"
-            self.comment.configure(
-                text="Even I have my limits."
-            )
+            self.comment.configure(text="Even I have my limits.")
 
         self.first_number = None
         self.operator = None
@@ -405,9 +424,7 @@ class ProbablyFour(ctk.CTk):
             self.temperature_choice.set("")
             self.converter_input.delete(0, "end")
             self.converter_result.configure(text="—")
-            self.conversion_direction.configure(
-                text="Select a unit to begin"
-            )
+            self.conversion_direction.configure(text="Select a unit to begin")
 
             self.comment.configure(
                 text=(
@@ -427,10 +444,7 @@ class ProbablyFour(ctk.CTk):
             self.button_frame.pack()
 
             self.clear()
-            self.comment.configure(
-                text="Back to elementary mathematics, I see."
-            )
-
+            self.comment.configure(text="Back to elementary mathematics, I see.")
 
     def select_temperature(self, selected):
         if self.gentleman_mode:
@@ -445,17 +459,13 @@ class ProbablyFour(ctk.CTk):
             self.temperature_unit = "Fahrenheit"
             self.temperature_choice.set("Fahrenheit")
 
-            self.comment.configure(
-                text="Celsius? How provincial."
-            )
+            self.comment.configure(text="Celsius? How provincial.")
 
         else:
             self.temperature_unit = "Celsius"
             self.temperature_choice.set("Celsius")
 
-            self.comment.configure(
-                text="Fahrenheit? An eccentric preference."
-            )
+            self.comment.configure(text="Fahrenheit? An eccentric preference.")
 
         if self.temperature_unit == "Celsius":
             direction = "Celsius → Fahrenheit"
@@ -465,12 +475,9 @@ class ProbablyFour(ctk.CTk):
         self.conversion_direction.configure(text=direction)
         self.converter_result.configure(text="—")
 
-
     def convert_temperature(self):
         if self.temperature_unit is None:
-            self.comment.configure(
-                text="One must first select a unit."
-            )
+            self.comment.configure(text="One must first select a unit.")
             return False
 
         try:
@@ -481,19 +488,14 @@ class ProbablyFour(ctk.CTk):
                 self.temperature_unit,
             )
 
-            self.converter_result.configure(
-                text=f"{result} {unit}"
-            )
+            self.converter_result.configure(text=f"{result} {unit}")
 
             return True
 
         except (InvalidOperation, ValueError, OverflowError):
             self.converter_result.configure(text="Error")
-            self.comment.configure(
-                text="Numbers, if you would be so kind."
-            )
+            self.comment.configure(text="Numbers, if you would be so kind.")
             return False
-
 
     def clear(self):
         self.current_input = "0"
@@ -501,6 +503,7 @@ class ProbablyFour(ctk.CTk):
         self.operator = None
         self.start_new_input = False
         self.comment.configure(text="At your service. Regrettably.")
+        self.keyboard_used = False
 
     def shuffle_digits(self):
         positions = [
@@ -516,14 +519,8 @@ class ProbablyFour(ctk.CTk):
         for button, (row, column) in zip(self.digit_buttons, shuffled):
             button.grid(row=row, column=column)
 
-    def get_hostility_level(self):
-        return hostility_level(self.calculation_count)
-
-
     def make_comment(self):
-        self.comment.configure(
-            text=random_comment(self.calculation_count)
-        )
+        self.comment.configure(text=random_comment(self.calculation_count))
 
     def request_confirmation(self, on_confirm):
         if should_confirm(self.calculation_count):
@@ -537,9 +534,7 @@ class ProbablyFour(ctk.CTk):
 
         if self.mode == "Converter":
             if self.temperature_unit is None:
-                self.comment.configure(
-                    text="One must first select a unit."
-                )
+                self.comment.configure(text="One must first select a unit.")
                 return
 
             try:
@@ -548,12 +543,14 @@ class ProbablyFour(ctk.CTk):
                     raise InvalidOperation
             except (InvalidOperation, ValueError):
                 self.converter_result.configure(text="Error")
-                self.comment.configure(
-                    text="Numbers, if you would be so kind."
-                )
+                self.comment.configure(text="Numbers, if you would be so kind.")
                 return
 
         self.processing = True
+
+        if self.mode == "Calculator" and self.keyboard_used:
+            self.show_keyboard_warning()
+            return
 
         if self.gentleman_mode:
             self.finish_calculation()
@@ -561,12 +558,9 @@ class ProbablyFour(ctk.CTk):
 
         self.request_confirmation(self.continue_calculation)
 
-
     def continue_calculation(self):
         if should_delay(self.calculation_count):
-            self.comment.configure(
-                text=processing_message()
-            )
+            self.comment.configure(text=processing_message())
 
             self.progress.pack(after=self.comment, pady=(0, 8))
             self.progress.start()
@@ -597,9 +591,7 @@ class ProbablyFour(ctk.CTk):
                 if self.gentleman_mode:
                     self.gentleman_mode = False
 
-                    self.comment.configure(
-                        text="Let us not make a habit of this."
-                    )
+                    self.comment.configure(text="Let us not make a habit of this.")
 
                     if self.mode == "Converter":
                         self.temperature_unit = None
@@ -621,27 +613,28 @@ class ProbablyFour(ctk.CTk):
             self.mode_switch.configure(state="normal")
             self.converter_input.configure(state="normal")
             self.temperature_choice.configure(state="normal")
-
+            self.keyboard_used = False
 
     def maybe_become_gentleman(self):
         if should_become_gentleman(self.calculation_count):
             self.gentleman_mode = True
 
-            self.comment.configure(
-                text="Very well. You appear capable enough."
-            )
+            self.comment.configure(text="Very well. You appear capable enough.")
 
             if self.mode == "Converter":
                 self.temperature_unit = None
                 self.temperature_choice.set("")
-                self.conversion_direction.configure(
-                    text="Select a unit to begin"
-                )
+                self.conversion_direction.configure(text="Select a unit to begin")
 
-    def show_confirmation(self, on_confirm):
+    def show_confirmation(
+        self,
+        on_confirm,
+        title="Are you quite certain?",
+        description="One ought to think before calculating.",
+        accept_text="Indeed",
+    ):
         self.mode_switch.configure(state="disabled")
 
-        # Temporarily hide the active interface
         if self.mode == "Calculator":
             self.button_frame.pack_forget()
         else:
@@ -649,8 +642,8 @@ class ProbablyFour(ctk.CTk):
 
         panel = ctk.CTkFrame(
             self,
-            width=330,
-            height=200,
+            width=340,
+            height=235,
             corner_radius=16,
             fg_color=COLORS["white"],
             border_width=1,
@@ -661,22 +654,25 @@ class ProbablyFour(ctk.CTk):
 
         ctk.CTkLabel(
             panel,
-            text="Are you quite certain?",
-            font=("Arial", 21, "bold"),
+            text=title,
+            font=("Arial", 20, "bold"),
             text_color=COLORS["text"],
-        ).pack(pady=(25, 8))
+            wraplength=300,
+            justify="center",
+        ).pack(pady=(22, 8))
 
         ctk.CTkLabel(
             panel,
-            text="One ought to think before calculating.",
+            text=description,
             font=("Arial", 14),
             text_color=COLORS["muted"],
-        ).pack(pady=(0, 25))
+            wraplength=300,
+            justify="center",
+        ).pack(pady=(0, 18))
 
         def respond(accepted):
             panel.destroy()
 
-            # Restore the normal interface
             if self.mode == "Calculator":
                 self.button_frame.pack()
             else:
@@ -688,9 +684,9 @@ class ProbablyFour(ctk.CTk):
                 self.after_idle(on_confirm)
             else:
                 self.processing = False
-                self.comment.configure(
-                    text="A rare moment of good judgement."
-                )
+                self.keyboard_used = False
+
+                self.comment.configure(text="A rare moment of good judgement.")
 
         buttons = ctk.CTkFrame(
             panel,
@@ -700,27 +696,27 @@ class ProbablyFour(ctk.CTk):
 
         ctk.CTkButton(
             buttons,
-            text="Indeed",
-            width=130,
+            text=accept_text,
+            width=155,
             height=42,
-            font=("Arial", 15, "bold"),
+            font=("Arial", 14, "bold"),
             fg_color=COLORS["numbers"],
             hover_color="#C9C4D5",
             text_color=COLORS["text"],
             command=lambda: respond(True),
-        ).pack(side="left", padx=5)
+        ).pack(side="left", padx=4)
 
         ctk.CTkButton(
             buttons,
             text="I suppose not",
-            width=130,
+            width=135,
             height=42,
-            font=("Arial", 15, "bold"),
+            font=("Arial", 14),
             fg_color=COLORS["accent"],
             hover_color="#D9B8C0",
             text_color=COLORS["text"],
             command=lambda: respond(False),
-        ).pack(side="left", padx=5)
+        ).pack(side="left", padx=4)
 
     def on_key_press(self, event):
         if self.processing or self.mode != "Calculator":
@@ -729,19 +725,20 @@ class ProbablyFour(ctk.CTk):
         key = event.keysym
         char = event.char
 
-        if char and char in "0123456789":
-            self.handle_button(char)
+        if char in "0123456789" and char:
+            self.handle_button(char, source="keyboard")
 
         elif key == "KP_Decimal" or char == ".":
-            self.handle_button(".")
+            self.handle_button(".", source="keyboard")
 
         elif key in ("Return", "KP_Enter") or char == "=":
-            self.handle_button("=")
+            self.handle_button("=", source="keyboard")
 
         elif key == "Escape":
-            self.handle_button("C")
+            self.handle_button("C", source="keyboard")
 
         elif key == "BackSpace":
+            self.keyboard_used = True
             self.backspace()
             self.update_display()
 
@@ -763,7 +760,7 @@ class ProbablyFour(ctk.CTk):
             operator = operators.get(char) or keypad_operators.get(key)
 
             if operator:
-                self.handle_button(operator)
+                self.handle_button(operator, source="keyboard")
 
     def backspace(self):
         if self.current_input == "Error" or self.start_new_input:
@@ -774,6 +771,37 @@ class ProbablyFour(ctk.CTk):
 
         if self.current_input == "-":
             self.current_input = "0"
+
+    def update_operator_highlight(self):
+        for symbol, button in self.operator_buttons.items():
+            selected = symbol == self.operator
+
+            button.configure(
+                fg_color="#B9A7DC" if selected else COLORS["operators"],
+                border_width=2 if selected else 0,
+                border_color="#8F77C0",
+            )
+
+    def show_keyboard_warning(self):
+        def second_warning():
+            self.show_confirmation(
+                on_confirm=(
+                    self.finish_calculation
+                    if self.gentleman_mode
+                    else self.continue_calculation
+                ),
+                title="Then you'll have to click through this window every time.",
+                description="I trust you appreciate the consequences.",
+                accept_text="Yes, I am aware",
+            )
+
+        self.show_confirmation(
+            on_confirm=second_warning,
+            title="Are you sure that you want to use your keyboard?",
+            description="A rather unconventional approach.",
+            accept_text="Indeed",
+        )
+
 
 if __name__ == "__main__":
     app = ProbablyFour()
