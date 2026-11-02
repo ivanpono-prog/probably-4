@@ -76,7 +76,10 @@ def main():
         copied = 0
         for file in dist.files or []:
             parts = [p.lower() for p in file.parts]
-            if "licenses" in parts or file.name.lower().startswith(
+            dist_license = "licenses" in parts and any(
+                part.endswith(".dist-info") for part in parts
+            )
+            if dist_license or file.name.lower().startswith(
                 ("license", "copying", "notice", "authors")
             ):
                 if ".." in file.parts or file.is_absolute():

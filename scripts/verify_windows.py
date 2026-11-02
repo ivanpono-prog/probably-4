@@ -42,20 +42,22 @@ def main():
         if listed != actual_files - {"SHA256SUMS.txt"}:
             raise RuntimeError("File manifest does not cover the ZIP")
         report = destination / "result.json"
-        env = os.environ.copy()
+        env = {key.upper(): value for key, value in os.environ.items()}
         for key in list(env):
             if key.upper().startswith(("PYTHON", "VIRTUAL_ENV", "UV_")):
                 env.pop(key)
-        env["PATH"] = str(Path(env["SystemRoot"]) / "System32")
-        subprocess.run(
+        env["PATH"] = str(Path(env["SYSTEMROOT"]) / "System32")
+        process = subprocess.run(
             [str(app / "Probably4.exe"), "--smoke-test", str(report)],
             cwd=destination,
             env=env,
-            check=True,
+            check=False,
             timeout=60,
         )
+        if not report.is_file():
+            raise RuntimeError(f"EXE exited {process.returncode} without a test report")
         result = json.loads(report.read_text("utf-8"))
-        if result.get("ok") is not True:
+        if process.returncode != 0 or result.get("ok") is not True:
             raise RuntimeError(result)
         print(json.dumps(result, indent=2))
         (ROOT / "dist" / "smoke-test.json").write_text(
