@@ -8,6 +8,7 @@ dist/
 wheels/
 *.egg-info
 *.spec
+!Probably4.spec
 *.zip
 
 # Virtual environments
