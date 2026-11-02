@@ -21,6 +21,8 @@ def check_app(app):
     assert app.current_input == "7", "Digit input failed"
     app.backspace()
     assert app.current_input == "0", "Backspace failed"
+    app.current_input = "123"
+    app.update_display()
     app.change_mode("Converter")
     app.gentleman_mode = True
     app.select_temperature("Celsius")
@@ -28,6 +30,8 @@ def check_app(app):
     app.converter_input.insert(0, "100")
     app.convert_temperature()
     assert "212" in app.converter_result.cget("text"), "Temperature conversion failed"
+    app.change_mode("Calculator")
+    assert app.display.get() == "0", "Stale display after returning from converter"
     assert app.logo_image is not None, "Logo was not loaded"
     app.update()
     return {
@@ -40,5 +44,6 @@ def check_app(app):
             "digit_input",
             "backspace",
             "converter",
+            "mode_switch_display",
         ],
     }
