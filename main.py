@@ -814,7 +814,7 @@ if __name__ == "__main__":
         try:
             app = ProbablyFour()
             result = check_app(app)
-        except Exception:
+        except Exception:  # noqa: BLE001 -- report any smoke-test failure, then exit nonzero
             result = {"ok": False, "error": traceback.format_exc()}
         finally:
             if app is not None:

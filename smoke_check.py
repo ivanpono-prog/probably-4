@@ -6,12 +6,12 @@ from decimal import Decimal
 def check_app(app):
     app.withdraw()
     app.update()
-    app.first_number = Decimal("2")
+    app.first_number = Decimal(2)
     app.operator = "+"
     app.current_input = "2"
     app.calculate()
     assert app.current_input == "4", "Arithmetic failed"
-    app.first_number = Decimal("1")
+    app.first_number = Decimal(1)
     app.operator = "÷"
     app.current_input = "0"
     app.calculate()

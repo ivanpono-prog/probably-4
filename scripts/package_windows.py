@@ -1,16 +1,16 @@
 """Package the Windows build, preserving notices and a file hash manifest."""
 
 import hashlib
-import importlib.metadata as metadata
 import json
 import os
-from pathlib import Path
 import platform
 import shutil
 import struct
 import sys
 import tomllib
 import zipfile
+from importlib import metadata
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "dist" / "Probably4"
@@ -90,14 +90,21 @@ def main():
     # Preserve extra notices supplied by this exact Python runtime, when available.
     base = Path(sys.base_prefix)
     for source in base.rglob("*"):
-        if source.is_file() and source.name.lower().startswith(("license", "copying")):
-            if "site-packages" not in source.parts and source.stat().st_size:
-                copy_notice(source, notices / "python-runtime" / source.relative_to(base))
+        if (
+            source.is_file()
+            and source.name.lower().startswith(("license", "copying"))
+            and "site-packages" not in source.parts
+            and source.stat().st_size
+        ):
+            copy_notice(source, notices / "python-runtime" / source.relative_to(base))
     tk_license = BUNDLE / "_internal" / "_tk_data" / "license.terms"
     copy_notice(tk_license, notices / "Tk.txt")
-    for font in (BUNDLE / "_internal" / "customtkinter" / "assets" / "fonts").rglob("*"):
+    fonts = BUNDLE / "_internal" / "customtkinter" / "assets" / "fonts"
+    for font in fonts.rglob("*"):
         if font.suffix.lower() in (".ttf", ".otf"):
-            (notices / f"{font.stem}-notices.txt").write_text(font_notices(font), "utf-8")
+            (notices / f"{font.stem}-notices.txt").write_text(
+                font_notices(font), "utf-8"
+            )
     info = {
         "version": version,
         "source_commit": os.environ.get("BUILD_SOURCE_SHA", "local-unrecorded"),
