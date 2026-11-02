@@ -799,5 +799,28 @@ class ProbablyFour(ctk.CTk):
 
 
 if __name__ == "__main__":
-    app = ProbablyFour()
-    app.mainloop()
+    import argparse
+    import json
+    import sys
+    import traceback
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--smoke-test", type=Path, metavar="RESULT_JSON")
+    args = parser.parse_args()
+    if args.smoke_test:
+        from smoke_check import check_app
+
+        app = None
+        try:
+            app = ProbablyFour()
+            result = check_app(app)
+        except Exception:
+            result = {"ok": False, "error": traceback.format_exc()}
+        finally:
+            if app is not None:
+                app.destroy()
+        args.smoke_test.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        sys.exit(0 if result["ok"] else 1)
+    else:
+        app = ProbablyFour()
+        app.mainloop()

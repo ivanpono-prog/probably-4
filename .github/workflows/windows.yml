@@ -1,0 +1,58 @@
+name: Windows package
+
+on:
+  push:
+    branches: [main, 'release/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      BUILD_SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+        with:
+          version: '0.13.6'
+      - name: Install Python
+        run: uv python install 3.13.18
+      - name: Install locked dependencies
+        run: uv sync --locked --group build --no-install-project
+      - name: Tests
+        run: uv run --no-sync python -m pytest -v
+      - name: Formatting
+        run: uv run --no-sync ruff format --check .
+      - name: Lint
+        run: uv run --no-sync ruff check .
+      - name: Build EXE
+        run: uv run --no-sync pyinstaller --noconfirm --clean Probably4.spec
+      - name: Assemble ZIP and notices
+        run: uv run --no-sync python scripts/package_windows.py
+      - name: Verify extracted ZIP and frozen GUI
+        run: uv run --no-sync python scripts/verify_windows.py
+      - name: Verify executable metadata
+        shell: pwsh
+        run: |
+          $expected = uv run --no-sync python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $info = (Get-Item dist/Probably4/Probably4.exe).VersionInfo
+          if ($info.ProductVersion -ne $expected -or $info.FileVersion -ne $expected) { throw 'EXE version mismatch' }
+          $signature = Get-AuthenticodeSignature dist/Probably4/Probably4.exe
+          Write-Output "Version: $expected; signature: $($signature.Status)"
+      - name: Upload candidate (does not publish a release)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Probably4-windows-candidate
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/Probably4-v*-win64.zip
+            dist/*.sha256
+            dist/smoke-test.json
+            dist/Probably4/BUILD-INFO.json
