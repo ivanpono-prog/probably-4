@@ -8,6 +8,7 @@ Packaging and distribution improvements:
 - SHA256 for the ZIP and a manifest of bundled files.
 - Build information linking the package to its source commit and dependency lock.
 - Automated Windows build and extracted-EXE smoke check.
+- Refresh the calculator display when returning from the converter.
 
 Download `Probably4-v1.0.1-win64.zip`, extract the entire archive, and launch
 `Probably4/Probably4.exe`. Keep `_internal` and the license files with the EXE.

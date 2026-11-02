@@ -445,6 +445,7 @@ class ProbablyFour(ctk.CTk):
             self.button_frame.pack()
 
             self.clear()
+            self.update_display()
             self.comment.configure(text="Back to elementary mathematics, I see.")
 
     def select_temperature(self, selected):
